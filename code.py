@@ -3,13 +3,13 @@ import re
 import pandas as pd
 import os
 
-# PDF dosyalarının bulunduğu klasör yolu
+#the path which bills are in
 pdf_directory = 'C:/Users/kemal.susler/Desktop/faturalar/'
 excel_path = 'C:/Users/kemal.susler/Desktop/faturalar.xlsx'
 
 
 def extract_field(text, keyword, next_words=10):
-    # Anahtar kelimeyi bulma ve ardından gelen değeri çıkarma fonksiyonu
+    # Function to find the keyword and extract the value that follows
     pattern = rf'{keyword}\s*[:\s]*([\d\w\.\,\/-]+)'
     match = re.search(pattern, text, re.IGNORECASE)
     if match:
@@ -17,7 +17,7 @@ def extract_field(text, keyword, next_words=10):
     return None
 
 
-# gereksiz karakter temizleme
+# invalid character cleaning
 def sanitize_sheet_name(sheet_name):
     invalid_chars = ['\\', '/', '*', '[', ']', ':', '?']
     for char in invalid_chars:
@@ -25,10 +25,10 @@ def sanitize_sheet_name(sheet_name):
     return sheet_name
 
 
-# .pdf uzantılı dosyaları görme
+# choose the files which are endswith .pdf
 pdf_files = [f for f in os.listdir(pdf_directory) if f.endswith('.pdf')]
 
-# Her bir PDF dosyasını işleme
+# proccess each pdf file
 for pdf_file in pdf_files:
     pdf_path = os.path.join(pdf_directory, pdf_file)
 
@@ -37,7 +37,7 @@ for pdf_file in pdf_files:
         for page in pdf.pages:
             full_text += page.extract_text()
 
-    # kelimelerle ilgili alanları çıkarma
+    # extracting fields related to words
     fatura_no = extract_field(full_text, "Fatura No")
     fatura_tarihi = extract_field(full_text, "Fatura Tarihi")
     mal_hizmet_tutari = extract_field(full_text, "Mal / Hizmet Tutarı")
@@ -58,7 +58,7 @@ for pdf_file in pdf_files:
 
     ödenecek_tutar = extract_field(full_text, "Ödenecek Tutar")
 
-    # Çıkarılan verileri yazdırma
+    # test print
     print(f"PDF Dosyası: {pdf_file}")
     print(f"Fatura No: {fatura_no}")
     print(f"Fatura Tarihi: {fatura_tarihi}")
@@ -66,7 +66,7 @@ for pdf_file in pdf_files:
     print(f"Ödenecek Tutar: {ödenecek_tutar}")
     print("-----------------------------------")
 
-    # Excel dosyasına yazma
+    # writing to excel file
     df = pd.DataFrame({
         'Tarih': [fatura_tarihi],
         'Fatura Numarası': [fatura_no],
@@ -79,4 +79,4 @@ for pdf_file in pdf_files:
     with pd.ExcelWriter(excel_path, mode='a', if_sheet_exists='new') as writer:
         df.to_excel(writer, sheet_name=safe_sheet_name, index=False)
 
-print("Tüm PDF dosyaları başarıyla işlendi ve Excel dosyasına aktarıldı.")
+print("All PDF files were successfully processed and exported to Excel file.")
